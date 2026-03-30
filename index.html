@@ -53,62 +53,11 @@ input[type="file"]{display:none;}
   <ul class="file-list" id="fileList"></ul>
 </div>
 
-<script>
-  // ===== Firebase Config =====
-  const firebaseConfig = {
-    apiKey: "AIzaSyCPcbWr3azCSjqo4eMTMl19UZ4YruU6jIM",
-    authDomain: "files-b0a4c.firebaseapp.com",
-    projectId: "files-b0a4c",
-    storageBucket: "files-b0a4c.firebasestorage.app",
-    messagingSenderId: "898466817405",
-    appId: "1:898466817405:android:8525dad2e312f21c7e5814"
-  };
+<!-- Link to external JS -->
+<script src="app.js"></script>
 
-  firebase.initializeApp(firebaseConfig);
-  const storage = firebase.storage();
-  const firestore = firebase.firestore();
-
-  const fileInput = document.getElementById('fileInput');
-  const folderInput = document.getElementById('folderInput');
-  const fileList = document.getElementById('fileList');
-  const dropArea = document.getElementById('dropArea');
-
-  // ===== Upload files/folders =====
-  async function uploadFiles(files){
-    for(const file of files){
-      const path = file.webkitRelativePath || file.name;
-      const storageRef = storage.ref().child(path);
-      const uploadTask = storageRef.put(file);
-
-      // Create progress bar element
-      const li = document.createElement('li');
-      li.textContent = path;
-      const progressBar = document.createElement('div');
-      progressBar.classList.add('progress-bar');
-      li.appendChild(progressBar);
-      fileList.prepend(li);
-
-      uploadTask.on('state_changed',
-        snapshot => {
-          const percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          progressBar.style.width = percent + '%';
-        },
-        error => console.error(error),
-        async () => {
-          // Save metadata in Firestore
-          await firestore.collection('files').doc(path).set({
-            name: file.name,
-            path: path,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          loadFiles();
-        }
-      );
-    }
-  }
-
-  fileInput.addEventListener('change', e => uploadFiles([...e.target.files]));
-  folderInput.addEventListener('change', e => uploadFiles([...e.target.files]));
+</body>
+</html>  folderInput.addEventListener('change', e => uploadFiles([...e.target.files]));
 
   // Drag & Drop
   dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.classList.add('dragover'); });
