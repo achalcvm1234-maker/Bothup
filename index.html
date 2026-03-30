@@ -10,27 +10,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-<style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',sans-serif;}
-body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh;background:linear-gradient(135deg,#6a11cb,#2575fc);padding:30px;}
-.container{background:#fff;border-radius:15px;padding:30px;width:100%;max-width:700px;text-align:center;box-shadow:0 15px 25px rgba(0,0,0,0.2);}
-h1{margin-bottom:20px;color:#333;font-size:1.8rem;}
-input[type="file"]{display:none;}
-.buttons{display:flex;justify-content:center;gap:20px;margin-bottom:20px;flex-wrap:wrap;}
-.btn-upload{padding:12px 25px;border-radius:10px;border:none;cursor:pointer;background:#6a11cb;color:#fff;font-size:1rem;transition:0.3s;}
-.btn-upload:hover{background:#2575fc;}
-.file-list{margin-top:20px;text-align:left;max-height:400px;overflow-y:auto;}
-.file-list li{margin-bottom:10px;padding:10px;border-radius:5px;background:#f1f1f1;word-break:break-all;display:flex;justify-content:space-between;align-items:center;}
-.file-actions button{margin-left:5px;padding:5px 10px;border:none;color:white;border-radius:5px;cursor:pointer;transition:0.3s;}
-.file-actions .download-btn{background:#6a11cb;}
-.file-actions .download-btn:hover{background:#2575fc;}
-.file-actions .delete-btn{background:#ff4b5c;}
-.file-actions .delete-btn:hover{background:#ff1f3d;}
-.progress-bar{width:0%;height:6px;background:#2575fc;margin-top:5px;border-radius:3px;transition:0.2s;}
-.drop-area{border:2px dashed #6a11cb;border-radius:10px;padding:30px;margin-bottom:20px;color:#555;transition:0.3s;}
-.drop-area.dragover{background:#f0f0f0;}
-@media(max-width:700px){.container{padding:20px;}h1{font-size:1.5rem;}}
-</style>
+<!-- External CSS -->
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -53,129 +34,7 @@ input[type="file"]{display:none;}
   <ul class="file-list" id="fileList"></ul>
 </div>
 
-<!-- Link to external JS -->
+<!-- External JS -->
 <script src="app.js"></script>
-
-</body>
-</html>  folderInput.addEventListener('change', e => uploadFiles([...e.target.files]));
-
-  // Drag & Drop
-  dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.classList.add('dragover'); });
-  dropArea.addEventListener('dragleave', e => { e.preventDefault(); dropArea.classList.remove('dragover'); });
-  dropArea.addEventListener('drop', e => {
-    e.preventDefault();
-    dropArea.classList.remove('dragover');
-    const files = [...e.dataTransfer.files];
-    uploadFiles(files);
-  });
-
-  // ===== Load files from Firestore =====
-
-  loadFiles();
-</script>
-
-</body>
-</html>        a.click();
-      });
-
-      // Delete button
-      const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = 'Delete';
-      deleteBtn.classList.add('async function loadFiles() {
-  fileList.innerHTML = '';
-  const snapshot = await firestore.collection('files').orderBy('createdAt','asc').get();
-
-  snapshot.forEach(doc => {
-    const file = doc.data();
-    const li = document.createElement('li');
-
-    const nameSpan = document.createElement('span');
-    nameSpan.textContent = file.path;
-
-    const actionsDiv = document.createElement('div');
-    actionsDiv.classList.add('file-actions');
-
-    // Download
-    const downloadBtn = document.createElement('button');
-    downloadBtn.textContent = 'Download';
-    downloadBtn.classList.add('download-btn');
-    downloadBtn.addEventListener('click', async () => {
-      try {
-        const url = await storage.ref(file.path).getDownloadURL();
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = file.name;
-        a.click();
-      } catch(e) {
-        alert('Download error: ' + e.message);
-      }
-    });
-
-    // Delete
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.classList.add('delete-btn');
-    deleteBtn.addEventListener('click', async () => {
-      try {
-        await storage.ref(file.path).delete();
-        await firestore.collection('files').doc(file.path).delete();
-        loadFiles(); // Reload list
-      } catch(e) {
-        alert('Delete error: ' + e.message);
-      }
-    });
-
-    actionsDiv.appendChild(downloadBtn);
-    actionsDiv.appendChild(deleteBtn);
-
-    li.appendChild(nameSpan);
-    li.appendChild(actionsDiv);
-    fileList.appendChild(li);
-  });
-}delete-btn');
-      deleteBtn.addEventListener('click', async ()=>{
-        await storage.ref(file.path).delete();
-        await firestore.collection('files').doc(file.path).delete();
-        loadFiles();
-      });
-
-      actionsDiv.appendChild(downloadBtn);
-      actionsDiv.appendChild(deleteBtn);
-
-      li.appendChild(nameSpan);
-      li.appendChild(actionsDiv);
-      fileList.appendChild(li);
-    });
-  }
-
-  loadFiles();
-</script>
-
-</body>
-</html>      const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = 'Delete';
-      deleteBtn.classList.add('delete-btn');
-      deleteBtn.addEventListener('click', async ()=>{
-        await storage.ref(file.path).delete();
-        await firestore.collection('files').doc(file.path).delete();
-        loadFiles();
-      });
-
-      actionsDiv.appendChild(downloadBtn);
-      actionsDiv.appendChild(deleteBtn);
-      li.appendChild(nameSpan);
-      li.appendChild(actionsDiv);
-      fileList.appendChild(li);
-    });
-  }
-
-  loadFiles();
-</script>
-
-</body>
-</html>// Initial load
-loadFiles();
-
-</script>
 </body>
 </html>
