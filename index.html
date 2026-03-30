@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Persistent File & Folder Upload/Download</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<title>Firebase File Manager</title>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
 <style>
   *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',sans-serif;}
   body{display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#6a11cb,#2575fc);}
@@ -42,73 +46,90 @@
 </div>
 
 <script>
-// ===== Supabase Setup =====
-const supabaseUrl = "PASTE_YOUR_PROJECT_URL_HERE"; // Example: https://xyz.supabase.co
-const supabaseKey = "PASTE_YOUR_PUBLIC_ANON_KEY_HERE"; // Supabase anon key
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-const bucketName = "files"; // Bucket name in Supabase
+  // ===== Firebase Config =====
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
 
-const fileInput = document.getElementById('fileInput');
-const folderInput = document.getElementById('folderInput');
-const fileList = document.getElementById('fileList');
+  const storage = firebase.storage();
+  const firestore = firebase.firestore();
 
-// Upload files to Supabase
-async function uploadFiles(files) {
-  for(const file of files){
-    let path = file.webkitRelativePath || file.name;
-    const { data, error } = await supabase.storage.from(bucketName).upload(path, file, {upsert:true});
-    if(error) alert(error.message);
+  const fileInput = document.getElementById('fileInput');
+  const folderInput = document.getElementById('folderInput');
+  const fileList = document.getElementById('fileList');
+
+  // Upload files to Firebase
+  async function uploadFiles(files){
+    for(const file of files){
+      let path = file.webkitRelativePath || file.name;
+      const storageRef = storage.ref().child(path);
+      await storageRef.put(file);
+
+      // Save metadata in Firestore
+      await firestore.collection('files').doc(path).set({
+        name: file.name,
+        path: path,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    loadFiles();
   }
+
+  fileInput.addEventListener('change', e => uploadFiles([...e.target.files]));
+  folderInput.addEventListener('change', e => uploadFiles([...e.target.files]));
+
+  // Load files list from Firestore
+  async function loadFiles(){
+    fileList.innerHTML = '';
+    const snapshot = await firestore.collection('files').orderBy('createdAt','asc').get();
+    snapshot.forEach(doc=>{
+      const file = doc.data();
+      const li = document.createElement('li');
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = file.name;
+
+      const actionsDiv = document.createElement('div');
+      actionsDiv.classList.add('file-actions');
+
+      const downloadBtn = document.createElement('button');
+      downloadBtn.textContent = 'Download';
+      downloadBtn.classList.add('download-btn');
+      downloadBtn.addEventListener('click', async ()=>{
+        const url = await storage.ref(file.path).getDownloadURL();
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        a.click();
+      });
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.classList.add('delete-btn');
+      deleteBtn.addEventListener('click', async ()=>{
+        await storage.ref(file.path).delete();
+        await firestore.collection('files').doc(file.path).delete();
+        loadFiles();
+      });
+
+      actionsDiv.appendChild(downloadBtn);
+      actionsDiv.appendChild(deleteBtn);
+      li.appendChild(nameSpan);
+      li.appendChild(actionsDiv);
+      fileList.appendChild(li);
+    });
+  }
+
   loadFiles();
-}
+</script>
 
-// Event listeners
-fileInput.addEventListener('change', e => uploadFiles([...e.target.files]));
-folderInput.addEventListener('change', e => uploadFiles([...e.target.files]));
-
-// Load files from Supabase bucket
-async function loadFiles(){
-  fileList.innerHTML = '';
-  const { data, error } = await supabase.storage.from(bucketName).list('', {limit:100, offset:0, sortBy:{column:'name', order:'asc'}});
-  if(error){ console.error(error); return; }
-
-  data.forEach(file=>{
-    const li = document.createElement('li');
-    const nameSpan = document.createElement('span');
-    nameSpan.textContent = file.name;
-
-    const actionsDiv = document.createElement('div');
-    actionsDiv.classList.add('file-actions');
-
-    const downloadBtn = document.createElement('button');
-    downloadBtn.textContent = 'Download';
-    downloadBtn.classList.add('download-btn');
-    downloadBtn.addEventListener('click', async ()=>{
-      const { data: urlData } = supabase.storage.from(bucketName).getPublicUrl(file.name);
-      const a = document.createElement('a');
-      a.href = urlData.publicUrl;
-      a.download = file.name;
-      a.click();
-    });
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.classList.add('delete-btn');
-    deleteBtn.addEventListener('click', async ()=>{
-      const { error } = await supabase.storage.from(bucketName).remove([file.name]);
-      if(error) alert(error.message);
-      loadFiles();
-    });
-
-    actionsDiv.appendChild(downloadBtn);
-    actionsDiv.appendChild(deleteBtn);
-    li.appendChild(nameSpan);
-    li.appendChild(actionsDiv);
-    fileList.appendChild(li);
-  });
-}
-
-// Initial load
+</body>
+</html>// Initial load
 loadFiles();
 
 </script>
