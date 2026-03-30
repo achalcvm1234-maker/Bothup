@@ -121,48 +121,6 @@ input[type="file"]{display:none;}
   });
 
   // ===== Load files from Firestore =====
-  async function loadFiles(){
-    fileList.innerHTML = '';
-    const snapshot = await firestore.collection('files').orderBy('createdAt','asc').get();
-
-    snapshot.forEach(doc => {
-      const file = doc.data();
-      const li = document.createElement('li');
-
-      const nameSpan = document.createElement('span');
-      nameSpan.textContent = file.path;
-
-      const actionsDiv = document.createElement('div');
-      actionsDiv.classList.add('file-actions');
-
-      const downloadBtn = document.createElement('button');
-      downloadBtn.textContent = 'Download';
-      downloadBtn.classList.add('download-btn');
-      downloadBtn.addEventListener('click', async () => {
-        const url = await storage.ref(file.path).getDownloadURL();
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = file.name;
-        a.click();
-      });
-
-      const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = 'Delete';
-      deleteBtn.classList.add('delete-btn');
-      deleteBtn.addEventListener('click', async () => {
-        await storage.ref(file.path).delete();
-        await firestore.collection('files').doc(file.path).delete();
-        loadFiles();
-      });
-
-      actionsDiv.appendChild(downloadBtn);
-      actionsDiv.appendChild(deleteBtn);
-
-      li.appendChild(nameSpan);
-      li.appendChild(actionsDiv);
-      fileList.appendChild(li);
-    });
-  }
 
   loadFiles();
 </script>
@@ -174,7 +132,58 @@ input[type="file"]{display:none;}
       // Delete button
       const deleteBtn = document.createElement('button');
       deleteBtn.textContent = 'Delete';
-      deleteBtn.classList.add('delete-btn');
+      deleteBtn.classList.add('async function loadFiles() {
+  fileList.innerHTML = '';
+  const snapshot = await firestore.collection('files').orderBy('createdAt','asc').get();
+
+  snapshot.forEach(doc => {
+    const file = doc.data();
+    const li = document.createElement('li');
+
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = file.path;
+
+    const actionsDiv = document.createElement('div');
+    actionsDiv.classList.add('file-actions');
+
+    // Download
+    const downloadBtn = document.createElement('button');
+    downloadBtn.textContent = 'Download';
+    downloadBtn.classList.add('download-btn');
+    downloadBtn.addEventListener('click', async () => {
+      try {
+        const url = await storage.ref(file.path).getDownloadURL();
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        a.click();
+      } catch(e) {
+        alert('Download error: ' + e.message);
+      }
+    });
+
+    // Delete
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.classList.add('delete-btn');
+    deleteBtn.addEventListener('click', async () => {
+      try {
+        await storage.ref(file.path).delete();
+        await firestore.collection('files').doc(file.path).delete();
+        loadFiles(); // Reload list
+      } catch(e) {
+        alert('Delete error: ' + e.message);
+      }
+    });
+
+    actionsDiv.appendChild(downloadBtn);
+    actionsDiv.appendChild(deleteBtn);
+
+    li.appendChild(nameSpan);
+    li.appendChild(actionsDiv);
+    fileList.appendChild(li);
+  });
+}delete-btn');
       deleteBtn.addEventListener('click', async ()=>{
         await storage.ref(file.path).delete();
         await firestore.collection('files').doc(file.path).delete();
