@@ -13,34 +13,39 @@ firebase.initializeApp(firebaseConfig);
 const storage = firebase.storage();
 const firestore = firebase.firestore();
 
-// DOM elements
+// DOM Elements
 const fileInput = document.getElementById('fileInput');
 const folderInput = document.getElementById('folderInput');
 const fileList = document.getElementById('fileList');
 const dropArea = document.getElementById('dropArea');
 
-// ===== Upload files/folders =====
-async function uploadFiles(files){
-  for(const file of files){
+// ===== Upload Files/Folders =====
+async function uploadFiles(files) {
+  for (const file of files) {
     const path = file.webkitRelativePath || file.name;
     const storageRef = storage.ref().child(path);
     const uploadTask = storageRef.put(file);
 
-    // Progress bar
+    // Create list item & progress bar
     const li = document.createElement('li');
-    li.textContent = path;
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = file.name;
+    nameSpan.style.flex = '1'; // take full width, buttons on right
     const progressBar = document.createElement('div');
     progressBar.classList.add('progress-bar');
+    li.appendChild(nameSpan);
     li.appendChild(progressBar);
     fileList.prepend(li);
 
+    // Track upload progress
     uploadTask.on('state_changed',
       snapshot => {
         const percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         progressBar.style.width = percent + '%';
       },
-      error => console.error(error),
+      error => console.error('Upload error:', error),
       async () => {
+        // Save metadata in Firestore
         await firestore.collection('files').doc(path).set({
           name: file.name,
           path: path,
@@ -52,10 +57,11 @@ async function uploadFiles(files){
   }
 }
 
+// File input events
 fileInput.addEventListener('change', e => uploadFiles([...e.target.files]));
 folderInput.addEventListener('change', e => uploadFiles([...e.target.files]));
 
-// ===== Drag & Drop =====
+// Drag & Drop events
 dropArea.addEventListener('dragover', e => {
   e.preventDefault();
   dropArea.classList.add('dragover');
@@ -70,17 +76,18 @@ dropArea.addEventListener('drop', e => {
   uploadFiles([...e.dataTransfer.files]);
 });
 
-// ===== Load files from Firestore =====
-async function loadFiles(){
+// ===== Load Files from Firestore =====
+async function loadFiles() {
   fileList.innerHTML = '';
-  const snapshot = await firestore.collection('files').orderBy('createdAt','asc').get();
+  const snapshot = await firestore.collection('files').orderBy('createdAt', 'asc').get();
 
   snapshot.forEach(doc => {
     const file = doc.data();
-    const li = document.createElement('li');
 
+    const li = document.createElement('li');
     const nameSpan = document.createElement('span');
-    nameSpan.textContent = file.path;
+    nameSpan.textContent = file.name;
+    nameSpan.style.flex = '1';
 
     const actionsDiv = document.createElement('div');
     actionsDiv.classList.add('file-actions');
@@ -96,7 +103,7 @@ async function loadFiles(){
         a.href = url;
         a.download = file.name;
         a.click();
-      } catch(e) {
+      } catch (e) {
         alert('Download error: ' + e.message);
       }
     });
@@ -110,7 +117,7 @@ async function loadFiles(){
         await storage.ref(file.path).delete();
         await firestore.collection('files').doc(file.path).delete();
         loadFiles();
-      } catch(e) {
+      } catch (e) {
         alert('Delete error: ' + e.message);
       }
     });
