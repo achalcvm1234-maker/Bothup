@@ -26,18 +26,21 @@ async function uploadFiles(files) {
     const storageRef = storage.ref().child(path);
     const uploadTask = storageRef.put(file);
 
-    // Create list item & progress bar
+    // List item & progress bar
     const li = document.createElement('li');
+    li.classList.add('file-item');
+
     const nameSpan = document.createElement('span');
     nameSpan.textContent = file.name;
-    nameSpan.style.flex = '1'; // take full width, buttons on right
+    nameSpan.style.flex = '1';
+
     const progressBar = document.createElement('div');
     progressBar.classList.add('progress-bar');
+
     li.appendChild(nameSpan);
     li.appendChild(progressBar);
     fileList.prepend(li);
 
-    // Track upload progress
     uploadTask.on('state_changed',
       snapshot => {
         const percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -51,7 +54,7 @@ async function uploadFiles(files) {
           path: path,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        loadFiles();
+        loadFiles(); // Refresh list after upload
       }
     );
   }
@@ -85,6 +88,8 @@ async function loadFiles() {
     const file = doc.data();
 
     const li = document.createElement('li');
+    li.classList.add('file-item');
+
     const nameSpan = document.createElement('span');
     nameSpan.textContent = file.name;
     nameSpan.style.flex = '1';
@@ -109,6 +114,31 @@ async function loadFiles() {
     });
 
     // Delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.classList.add('delete-btn');
+    deleteBtn.addEventListener('click', async () => {
+      try {
+        await storage.ref(file.path).delete();
+        await firestore.collection('files').doc(file.path).delete();
+        loadFiles();
+      } catch (e) {
+        alert('Delete error: ' + e.message);
+      }
+    });
+
+    actionsDiv.appendChild(downloadBtn);
+    actionsDiv.appendChild(deleteBtn);
+
+    li.appendChild(nameSpan);
+    li.appendChild(actionsDiv);
+
+    fileList.appendChild(li);
+  });
+}
+
+// Initial load
+loadFiles();    // Delete button
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = 'Delete';
     deleteBtn.classList.add('delete-btn');
