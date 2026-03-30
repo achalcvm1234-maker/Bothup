@@ -132,4 +132,28 @@ async function loadFiles() {
 }
 
 // Initial load
+loadFiles();    // Delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.classList.add('delete-btn');
+    deleteBtn.addEventListener('click', async () => {
+      try {
+        await storage.ref(file.path).delete();
+        await firestore.collection('files').doc(file.path).delete();
+        loadFiles();
+      } catch (e) {
+        alert('Delete error: ' + e.message);
+      }
+    });
+
+    actionsDiv.appendChild(downloadBtn);
+    actionsDiv.appendChild(deleteBtn);
+
+    li.appendChild(nameSpan);
+    li.appendChild(actionsDiv);
+    fileList.appendChild(li);
+  });
+}
+
+// Initial load
 loadFiles();
